@@ -1,0 +1,10 @@
+numpy
+matplotlib
+scipy
+pandas
+scikit-learn
+seaborn
+h5py
+mne==1.2.3
+yasa
+pyActigraphy

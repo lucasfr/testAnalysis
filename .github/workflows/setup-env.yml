@@ -1,0 +1,105 @@
+name: Generate .env
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.env'
+
+jobs:
+  generate-env:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate .env from repo name
+        run: |
+          # Get repo name, convert to Docker-safe format:
+          # lowercase, replace non-alphanumeric (except hyphen) with underscore
+          REPO_NAME="${{ github.event.repository.name }}"
+          IMAGE_NAME=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/_/g')
+          echo "Generated IMAGE_NAME=${IMAGE_NAME}"
+
+          # If .env exists, update IMAGE_NAME in place; otherwise create from .env.example
+          if [ -f .env ]; then
+            sed -i "s/^IMAGE_NAME=.*/IMAGE_NAME=${IMAGE_NAME}/" .env
+          else
+            cp .env.example .env
+            sed -i "s/^IMAGE_NAME=.*/IMAGE_NAME=${IMAGE_NAME}/" .env
+          fi
+
+      - name: Commit .env if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .env
+          git diff --cached --quiet || git commit -m "🔧 chore: auto-generate .env from repo name"
+          git push
+
+      - name: Reset README to stub (only if still contains TODO placeholders)
+        run: |
+          # Only reset if README still has the original template placeholders
+          if grep -q "_TODO_\|_Brief description" README.md; then
+            REPO_NAME="${{ github.event.repository.name }}"
+            cat > README.md << EOF
+          # 🐳 ${REPO_NAME}
+
+          > _Brief description of this project._
+
+          [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+          [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
+          [![R](https://img.shields.io/badge/R-4.4-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
+          [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+
+          ---
+
+          ## 📖 Overview
+
+          _TODO: describe the purpose of this environment._
+
+          ---
+
+          ## 🚀 Getting Started
+
+          \`\`\`bash
+          docker-compose up --build
+          \`\`\`
+
+          | Service | URL |
+          |---|---|
+          | JupyterLab | http://localhost:8889/lab |
+          | RStudio | http://localhost:8787 |
+
+          ---
+
+          ## 📦 Dependencies
+
+          _TODO: list key packages and versions._
+
+          ---
+
+          ## 👥 Authors
+
+          | Role | Names |
+          |---|---|
+
+          ---
+
+          ## 📄 Licence
+
+          Copyright © Circadia Lab — Lucas França & Mario Leocadio-Miguel
+
+          Released under the [MIT License](./LICENSE).
+          EOF
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add README.md
+            git diff --cached --quiet || git commit -m "📚 docs: reset README to stub template"
+            git push
+          else
+            echo "README already customised — skipping reset."
+          fi

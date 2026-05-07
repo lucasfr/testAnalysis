@@ -1,0 +1,31 @@
+services:
+
+  jupyter:
+    profiles: ["jupyter", "both"]
+    build:
+      context: ./jupyter
+      dockerfile: Dockerfile
+      args:
+        INSTALL_PACKAGE: ${INSTALL_PACKAGE:-false}
+    image: ${IMAGE_NAME}:latest
+    ports:
+      - "8889:8888"
+    working_dir: /home/jovyan/${IMAGE_NAME}
+    volumes:
+      - ".:/home/jovyan/${IMAGE_NAME}"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+
+  rstudio:
+    profiles: ["rstudio", "both"]
+    build:
+      context: ./rstudio
+      dockerfile: Dockerfile.${RSTUDIO_PROFILE:-minimal}
+    image: ${IMAGE_NAME}_r:latest
+    ports:
+      - "8787:8787"
+    working_dir: /home/rstudio/${IMAGE_NAME}
+    volumes:
+      - ".:/home/rstudio/${IMAGE_NAME}"
+    environment:
+      - DISABLE_AUTH=true

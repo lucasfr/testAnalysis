@@ -1,0 +1,48 @@
+FROM jmgirard/rstudio2u:latest
+
+# r2u + bspm means install.packages() automatically uses apt binaries
+# All packages below install as pre-built .deb files — no compilation needed
+
+# ggplot2 extensions
+RUN install2.r --error --skipinstalled \
+    ggpubr \
+    ggrepel \
+    ggridges \
+    patchwork \
+    cowplot \
+    scales \
+    viridis \
+    RColorBrewer
+
+# Stats packages
+RUN install2.r --error --skipinstalled \
+    lme4 \
+    lmerTest \
+    emmeans \
+    MuMIn \
+    effectsize \
+    performance \
+    parameters \
+    see
+
+# Bayesian stats (Stan — still compiles, but dependencies install as binaries)
+RUN install2.r --error --skipinstalled \
+    brms \
+    bayesplot \
+    tidybayes \
+    rstanarm
+
+# Sleep & circadian packages
+RUN install2.r --error --skipinstalled \
+    GGIR \
+    ActCR \
+    circacompare \
+    cosinor \
+    cosinor2
+
+# lunaR from GitHub (Luna project)
+RUN Rscript -e "devtools::install_github('remnrem/luna')"
+
+EXPOSE 8787
+
+CMD ["/init"]
